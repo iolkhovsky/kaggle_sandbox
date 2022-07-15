@@ -4,11 +4,14 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
+from torchvision.models import (
+    mobilenet_v2, MobileNet_V2_Weights, resnet18, ResNet18_Weights
+)
 
 
 MLP_MODEL_TYPE = "mlp"
 CNN_MOBILENET2_MODEL_TYPE = "cnn_mobilenet2"
+CNN_RESNET_MODEL_TYPE = "cnn_resnet"
 
 
 
@@ -140,6 +143,34 @@ class MobileNetV2Classifier(IDigitsRecognizer):
         return f"digits_recognizer_mobilenet2"
 
 
+class ResNetClassifier(IDigitsRecognizer):
+    def __init__(self):
+        super().__init__()
+
+    def build_feature_extractor(self):
+        base_model = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
+        return torch.nn.Sequential(
+            MobilenetPreprocessor(),
+            base_model.conv1,
+            base_model.bn1,
+            base_model.relu,
+            base_model.layer1,
+            base_model.layer2,
+            base_model.layer3,
+            base_model.layer4,
+            nn.MaxPool2d(kernel_size=2),
+        )
+
+    def flatten_features(self, x):
+        return torch.flatten(x, start_dim=1)
+
+    def build_classifier(self):
+        return ClassficiationHead(units=[512, 10])
+
+    def __str__(self) -> str:
+        return f"digits_recognizer_resnet"
+
+
 class InferenceModel(nn.Module):
     def __init__(self, model, preprocessor, device):
         super().__init__()
@@ -173,7 +204,7 @@ def build_model(model_type):
         return MLPClassifier()
     elif model_type == CNN_MOBILENET2_MODEL_TYPE:
         return MobileNetV2Classifier()
+    elif model_type == CNN_RESNET_MODEL_TYPE:
+        return ResNetClassifier()
     else:
         raise RuntimeError(f'Invalid model type: {model_type}')
-
-

@@ -1,5 +1,5 @@
 model:
-  type: cnn_mobilenet2
+  type: cnn_resnet
   preprocessing: imagenet
 dataset:
   path: data/train.csv

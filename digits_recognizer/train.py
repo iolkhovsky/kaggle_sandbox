@@ -1,6 +1,5 @@
 import argparse
 from datetime import datetime
-from nbformat import write
 import numpy as np
 import os
 import platform
@@ -9,8 +8,9 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader, random_split
-import torch.optim as optim
+import torch.optim
 import torchvision
+from torchsummary import summary
 from tqdm import tqdm
 import yaml
 
@@ -62,6 +62,8 @@ def train(
     if device is not None:
         exec_device = torch.device(device)
         print(f'Execution device is overloaded as {exec_device}')
+    
+    summary(model, input_size=(3, 28, 28))
     
     model.to(exec_device)
     model.train()
@@ -130,7 +132,9 @@ def train(
 
                 description = f"Epoch {epoch_idx + 1}/{epochs} "
                 description += f"Iteration {step_idx}/{total_steps} "
-                description += f"Loss {loss.detach().cpu().numpy()} "
+                train_loss = loss.detach().cpu().numpy()
+                description += f"Loss {train_loss} "
+                writer.add_scalar(f'Loss/Train', train_loss, step_idx)
                 pbar.set_description(description)
                 pbar.update(1)
                 step_idx += 1
