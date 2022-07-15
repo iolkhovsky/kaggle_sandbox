@@ -1,22 +1,26 @@
 model:
-  type: cnn_mobilenet2
+  type: cnn_resnext
   preprocessing: imagenet
 dataset:
   path: data/train.csv
   val_share: 0.1
   train_batch: 16
-  val_batch: 32
+  val_batch: 128
 optimizer:
   type: SGD
   pars:
     lr: 0.001
     momentum: 0.9
+  scheduler:
+    type: ExponentialLR
+    pars:
+      gamma: 0.9
 evaluation:
   metrics:
     - accuracy_score
     - f1_score
     - confusion_matrix
-  period: 200
+  period: 400
 autosave:
   period: 1
   path: checkpoints

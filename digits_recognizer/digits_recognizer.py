@@ -4,12 +4,16 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models import mobilenet_v2, MobileNet_V2_Weights
+from torchvision.models import (
+    mobilenet_v2, MobileNet_V2_Weights, resnet18, ResNet18_Weights, resnext50_32x4d,
+    ResNeXt50_32X4D_Weights,
+)
 
 
 MLP_MODEL_TYPE = "mlp"
 CNN_MOBILENET2_MODEL_TYPE = "cnn_mobilenet2"
-
+CNN_RESNET_MODEL_TYPE = "cnn_resnet"
+CNN_RESNEXT_MODEL_TYPE = "cnn_resnext"
 
 
 class MLPLayer(nn.Module):
@@ -107,7 +111,7 @@ class MLPClassifier(IDigitsRecognizer):
         return f"digits_recognizer_mlp:{self.units}"
 
 
-class MobilenetPreprocessor(nn.Module):
+class ChannelOrderValidator(nn.Module):
     def __init__(self) -> None:
         super().__init__()
     
@@ -125,7 +129,7 @@ class MobileNetV2Classifier(IDigitsRecognizer):
     def build_feature_extractor(self):
         base_model = mobilenet_v2(weights=MobileNet_V2_Weights.IMAGENET1K_V1)
         return torch.nn.Sequential(
-            MobilenetPreprocessor(),
+            ChannelOrderValidator(),
             base_model.features[:8],
             nn.MaxPool2d(kernel_size=2)
         )
@@ -138,6 +142,62 @@ class MobileNetV2Classifier(IDigitsRecognizer):
 
     def __str__(self) -> str:
         return f"digits_recognizer_mobilenet2"
+
+
+class ResNetClassifier(IDigitsRecognizer):
+    def __init__(self):
+        super().__init__()
+
+    def build_feature_extractor(self):
+        base_model = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
+        return torch.nn.Sequential(
+            ChannelOrderValidator(),
+            base_model.conv1,
+            base_model.bn1,
+            base_model.relu,
+            base_model.layer1,
+            base_model.layer2,
+            base_model.layer3,
+            base_model.layer4,
+            nn.MaxPool2d(kernel_size=2),
+        )
+
+    def flatten_features(self, x):
+        return torch.flatten(x, start_dim=1)
+
+    def build_classifier(self):
+        return ClassficiationHead(units=[512, 10])
+
+    def __str__(self) -> str:
+        return f"digits_recognizer_resnet"
+
+
+class ResNeXtClassifier(IDigitsRecognizer):
+    def __init__(self):
+        super().__init__()
+
+    def build_feature_extractor(self):
+        base_model = resnext50_32x4d(weights=ResNeXt50_32X4D_Weights.IMAGENET1K_V1)
+        return torch.nn.Sequential(
+            ChannelOrderValidator(),
+            base_model.conv1,
+            base_model.bn1,
+            base_model.relu,
+            base_model.maxpool,
+            base_model.layer1,
+            base_model.layer2,
+            base_model.layer3,
+            nn.MaxPool2d(kernel_size=2),
+        )
+
+    def flatten_features(self, x):
+        return torch.flatten(x, start_dim=1)
+
+    def build_classifier(self):
+        return ClassficiationHead(units=[1024, 10])
+
+    def __str__(self) -> str:
+        return f"digits_recognizer_resnet"
 
 
 class InferenceModel(nn.Module):
@@ -173,7 +233,14 @@ def build_model(model_type):
         return MLPClassifier()
     elif model_type == CNN_MOBILENET2_MODEL_TYPE:
         return MobileNetV2Classifier()
+    elif model_type == CNN_RESNET_MODEL_TYPE:
+        return ResNetClassifier()
+    elif model_type == CNN_RESNEXT_MODEL_TYPE:
+        return ResNeXtClassifier()
     else:
         raise RuntimeError(f'Invalid model type: {model_type}')
 
 
+if __name__ == "__main__":
+    model = ResNeXtClassifier()
+    model(torch.rand(1, 28, 28, 1))

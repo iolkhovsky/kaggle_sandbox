@@ -1,0 +1,62 @@
+dataset:
+  path: data/facial-keypoints-detection/training.csv
+  image:
+    height: 96
+    width: 96
+  train:
+    batch_size: 64
+  val:
+    batch_size: 16
+    share: 0.1
+  test:
+    batch_size: 16
+    share: 0.1
+model:
+  backbone:
+    name: mobilenet2
+    pretrained: true
+  regression_head:
+    dense_struct:
+      - 128
+    activation: leaky_relu
+    final_activation: sigmoid
+  keypoints_names:
+    - left_eye_center
+    - right_eye_center
+    - left_eye_inner_corner
+    - left_eye_outer_corner
+    - right_eye_inner_corner
+    - right_eye_outer_corner
+    - left_eyebrow_inner_end
+    - left_eyebrow_outer_end
+    - right_eyebrow_inner_end
+    - right_eyebrow_outer_end
+    - nose_tip
+    - mouth_left_corner
+    - mouth_right_corner
+    - mouth_center_top_lip
+    - mouth_center_bottom_lip
+  target_resolution:
+    height: 96
+    width: 96
+training:
+  criterion: MSELoss
+  optimizer:
+    type: SGD
+    pars:
+      lr: 0.001
+      momentum: 0.9
+  scheduler:
+    type: ExponentialLR
+    pars:
+      gamma: 0.9
+  autosave:
+    period: 1
+    path: checkpoints
+    onnx:
+      enable: true
+  logs_path: logs
+  epochs: 20
+  metrics:
+    train_steps: 10
+    val_steps: 10
