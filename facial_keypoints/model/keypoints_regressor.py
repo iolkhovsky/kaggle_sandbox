@@ -201,3 +201,18 @@ class KeypointsRegressor(nn.Module):
         prediction = self.core(tensor)
         result = self.postprocessor(prediction, scales, ret_raw=ret_raw)
         return result
+
+
+def build_model(model_config):
+    img_height = model_config['target_resolution']['height']
+    img_width = model_config['target_resolution']['width']
+    model = KeypointsRegressor(
+        backbone=model_config['backbone']['name'],
+        pretrained_backbone=model_config['backbone']['pretrained'],
+        keypoints_names=model_config['keypoints_names'],
+        target_resolution=(img_height, img_width),
+        regressor_struct=model_config['regression_head']['dense_struct'],
+        regressor_inner_act=model_config['regression_head']['activation'],
+        regressor_final_act=model_config['regression_head']['final_activation'],
+    )
+    return model

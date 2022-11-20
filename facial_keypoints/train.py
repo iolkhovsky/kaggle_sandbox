@@ -14,7 +14,7 @@ import traceback
 from dataset.dataloader import KeyPointsDataset
 from dataset.transforms import ToTensor
 from dataset.visualization import visualize_training
-from model.keypoints_regressor import KeypointsRegressor
+from model.keypoints_regressor import build_model
 
 
 def parse_args():
@@ -42,7 +42,7 @@ def save_model(model, models_dir, hint, save_onnx=False):
     checkpoint_path = os.path.join(models_dir, f"state_dict_{hint}")
     torch.save(model.state_dict(), checkpoint_path)
     if save_onnx:
-        init_device = model.device
+        init_device = next(model.parameters()).device
         model.eval()
         model = model.to("cpu")
         onnx_path = os.path.join(models_dir, f"model_{hint}.onnx")
@@ -92,21 +92,6 @@ def build_datasets(data_config):
         num_workers=0
     )
     return train_loader, val_loader, test_loader
-
-
-def build_model(model_config):
-    img_height = model_config['target_resolution']['height']
-    img_width = model_config['target_resolution']['width']
-    model = KeypointsRegressor(
-        backbone=model_config['backbone']['name'],
-        pretrained_backbone=model_config['backbone']['pretrained'],
-        keypoints_names=model_config['keypoints_names'],
-        target_resolution=(img_height, img_width),
-        regressor_struct=model_config['regression_head']['dense_struct'],
-        regressor_inner_act=model_config['regression_head']['activation'],
-        regressor_final_act=model_config['regression_head']['final_activation'],
-    )
-    return model
 
 
 def build_optimizer(model, optim_config):
@@ -230,7 +215,7 @@ def run_training(config):
                 pbar.update(1)
             
             try:
-                if autosave_period > 0 and (epoch_idx % autosave_period == 0) and epoch_idx:
+                if autosave_period > 0 and (epoch_idx % autosave_period == 0):
                     save_model(model, models_dir, f"epoch_{epoch_idx}", save_onnx=save_onnx)
                 
                 if scheduler is not None:
