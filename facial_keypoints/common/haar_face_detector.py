@@ -21,7 +21,7 @@ class HaarFaceDetector:
 
 
 if __name__ == "__main__":
-    facedet = FaceDetector()
+    facedet = HaarFaceDetector()
     cap = cv2.VideoCapture(0)
     while True:
         ret, img = cap.read()
