@@ -26,5 +26,7 @@ class KeyPointsDataset(Dataset):
 
         if self._transform:
             sample = self._transform(sample)
+        
+        assert sample['keypoints'].shape[0] == 30
 
         return sample

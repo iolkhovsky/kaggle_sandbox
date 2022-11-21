@@ -12,7 +12,7 @@ from torchsummary import summary
 import traceback
 
 from dataset.dataloader import KeyPointsDataset
-from dataset.transforms import ToTensor
+import dataset.transforms as xforms
 from dataset.visualization import visualize_training
 from model.keypoints_regressor import build_model
 
@@ -63,7 +63,16 @@ def save_model(model, models_dir, hint, save_onnx=False):
 
 
 def build_datasets(data_config):
-    full_dataset = KeyPointsDataset(data_config['path'], transform=lambda x: ToTensor()(x))
+    transforms = []
+    for transform in data_config['transforms']:
+        op = getattr(xforms, transform['transform'])
+        args = {}
+        if 'attrs' in transform:
+            args = transform['attrs']
+        transforms.append(op(**args))
+    dataset_transform = xforms.CompositeTransform(transforms)
+
+    full_dataset = KeyPointsDataset(data_config['path'], transform=dataset_transform)
     full_size = len(full_dataset)
     val_size = int(full_size * data_config['val']['share'])
     test_size = int(full_size * data_config['test']['share'])

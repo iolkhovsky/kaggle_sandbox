@@ -11,6 +11,26 @@ dataset:
   test:
     batch_size: 16
     share: 0.1
+  transforms:
+    - transform: HorizontalFlipTransform
+      attrs:
+        p: 0.5
+    - transform: RotateTransform
+      attrs:
+        p: 0.5
+        limit: 30
+    - transform: RandomResizedCropTransform
+      attrs:
+        p: 0.5
+        height: 96
+        width: 96
+        scale:
+          - 0.8
+          - 1.
+        ratio:
+          - 1.
+          - 1.
+    - transform: ToTensor
 model:
   backbone:
     name: mobilenet2
