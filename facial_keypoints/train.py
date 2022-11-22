@@ -197,6 +197,9 @@ def run_training(config):
                     if val_metrics is not None:
                         if step_idx % val_metrics_interval == 0:
                             model.eval()
+                            val_batch = next(val_iter)
+                            inputs, targets = val_batch['image'], val_batch['keypoints']
+                            inputs, targets = inputs.to(exec_device), targets.to(exec_device)
                             for metric_name, evaluator in val_metrics.items():
                                 predicted = model(inputs)
                                 value = evaluator(predicted, targets)

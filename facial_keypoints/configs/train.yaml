@@ -6,10 +6,10 @@ dataset:
   train:
     batch_size: 64
   val:
-    batch_size: 16
+    batch_size: 32
     share: 0.1
   test:
-    batch_size: 16
+    batch_size: 32
     share: 0.1
   transforms:
     - transform: HorizontalFlipTransform
@@ -26,7 +26,7 @@ dataset:
         width: 96
         scale:
           - 0.8
-          - 1.
+          - 1.2
         ratio:
           - 1.
           - 1.
@@ -37,7 +37,7 @@ model:
     pretrained: true
   regression_head:
     dense_struct:
-      - 128
+      - 256
     activation: leaky_relu
     final_activation: sigmoid
   keypoints_names:
@@ -64,19 +64,19 @@ training:
   optimizer:
     type: SGD
     pars:
-      lr: 0.001
+      lr: 0.003
       momentum: 0.9
   scheduler:
     type: ExponentialLR
     pars:
-      gamma: 0.9
+      gamma: 0.999
   autosave:
-    period: 1
+    period: 5
     path: checkpoints
     onnx:
       enable: true
   logs_path: logs
-  epochs: 20
+  epochs: 100
   metrics:
-    train_steps: 10
-    val_steps: 10
+    train_steps: 20
+    val_steps: 20
