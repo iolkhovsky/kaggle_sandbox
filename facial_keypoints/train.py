@@ -129,6 +129,8 @@ def run_training(config):
     models_dir = os.path.join(config['training']['autosave']['path'], timestamp)
     save_onnx = config['training']['autosave']['onnx']['enable']
     os.makedirs(logs_dir)
+    with open(os.path.join(logs_dir, "train_config.yaml"), "wt") as f:
+        yaml.dump(config, f, default_flow_style=False)
     os.makedirs(models_dir)
     writer = SummaryWriter(logs_dir)
     exec_device = get_available_device()
