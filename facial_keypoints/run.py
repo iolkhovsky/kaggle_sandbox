@@ -11,7 +11,7 @@ from model.keypoints_regressor import build_model
 def parse_args():
     parser = argparse.ArgumentParser(description='Run keypoints detector on webcam stream')
     parser.add_argument('--model', type=str,
-                        default='checkpoints/20-Nov-2022-19-27-31/state_dict_epoch_19_final')
+                        default='checkpoints/26-Nov-2022-13-50-01/state_dict_epoch_99_final')
     parser.add_argument('--device', type=int, default=0)
     parser.add_argument('--model_config', type=str,
                         default='configs/deploy.yaml')
