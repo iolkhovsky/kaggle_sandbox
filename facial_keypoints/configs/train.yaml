@@ -37,7 +37,7 @@ model:
     pretrained: true
   regression_head:
     dense_struct:
-      - 256
+      - 128
     activation: leaky_relu
     final_activation: sigmoid
   keypoints_names:
@@ -64,7 +64,7 @@ training:
   optimizer:
     type: SGD
     pars:
-      lr: 0.003
+      lr: 0.001
       momentum: 0.9
   scheduler:
     type: ExponentialLR

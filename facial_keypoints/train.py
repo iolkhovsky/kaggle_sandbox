@@ -1,5 +1,6 @@
 import argparse
 import datetime
+from itertools import cycle
 import numpy as np
 import os
 import platform
@@ -158,7 +159,7 @@ def run_training(config):
     epochs = config['training']['epochs']
     total_steps = epochs * len(train_loader)
     step_idx = 0
-    val_iter = iter(val_loader)
+    val_iter = iter(cycle(val_loader))
 
     if scheduler is not None:
         writer.add_scalar(f'LearningRate', scheduler.get_last_lr()[0], step_idx)
@@ -170,6 +171,7 @@ def run_training(config):
                 description += f"Iteration {step_idx}/{total_steps} "
 
                 try:
+                    model.train()
                     inputs, targets = train_batch['image'], train_batch['keypoints']
                     inputs, targets = inputs.to(exec_device), targets.to(exec_device)
                     optimizer.zero_grad()
@@ -206,20 +208,20 @@ def run_training(config):
                                 writer.add_scalar(f'Metrics/Val":{metric_name}', value, step_idx)
                             model.train()
                         
-                        np_images = inputs.detach().cpu().numpy().astype(np.uint8)
-                        np_pred = predicted.detach().cpu().numpy()
-                        np_gt = targets.detach().cpu().numpy()
+                            np_images = inputs.detach().cpu().numpy().astype(np.uint8)
+                            np_pred = predicted.detach().cpu().numpy()
+                            np_gt = targets.detach().cpu().numpy()
 
-                        imgs = visualize_training(
-                            image_batch=np_images,
-                            pred_batch=np_pred,
-                            gt_batch=np_gt,
-                            ret_images=True,
-                        )
+                            imgs = visualize_training(
+                                image_batch=np_images,
+                                pred_batch=np_pred,
+                                gt_batch=np_gt,
+                                ret_images=True,
+                            )
 
-                        images = [torch.permute(torch.from_numpy(x), (2, 0, 1)) for x in imgs]
-                        grid = torchvision.utils.make_grid(images)
-                        writer.add_image(f'Prediction', grid, step_idx)
+                            images = [torch.permute(torch.from_numpy(x), (2, 0, 1)) for x in imgs]
+                            grid = torchvision.utils.make_grid(images)
+                            writer.add_image(f'Prediction', grid, step_idx)
                 except Exception:
                     print(f"Error: Got an unhandled exception during validation step {step_idx}")
                     print(traceback.format_exc())
