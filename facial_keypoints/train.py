@@ -14,7 +14,7 @@ import traceback
 
 from dataset.dataloader import KeyPointsDataset
 import dataset.transforms as xforms
-from dataset.visualization import visualize_training
+from dataset.visualization import visualize_training, visualize_distributions
 from model.keypoints_regressor import build_model
 
 
@@ -218,10 +218,18 @@ def run_training(config):
                                 gt_batch=np_gt,
                                 ret_images=True,
                             )
-
                             images = [torch.permute(torch.from_numpy(x), (2, 0, 1)) for x in imgs]
                             grid = torchvision.utils.make_grid(images)
                             writer.add_image(f'Prediction', grid, step_idx)
+
+                            distrib = visualize_distributions(
+                                pred_batch=np_pred,
+                                gt_batch=np_gt,
+                            )
+                            images = [torch.permute(torch.from_numpy(distrib), (2, 0, 1))]
+                            grid = torchvision.utils.make_grid(images)
+                            writer.add_image(f'Distributions', grid, step_idx)
+
                 except Exception:
                     print(f"Error: Got an unhandled exception during validation step {step_idx}")
                     print(traceback.format_exc())

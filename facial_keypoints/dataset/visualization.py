@@ -1,7 +1,7 @@
 from copy import deepcopy
 import cv2
 import matplotlib.pyplot as plt
-import numpy as np
+from tempfile import NamedTemporaryFile
 import torch
 
 from dataset.sample import Sample
@@ -93,3 +93,39 @@ def visualize_training(image_batch, pred_batch, gt_batch,
         return viz_imgs
     else:
         plot_samples(list(zip(viz_imgs, labels)), cols=max(1, len(image_batch) // 2), figsize=figsize)
+
+
+def visualize_distributions(pred_batch, gt_batch, figsize=(8, 4), img_size=(96, 96)):
+    if isinstance(pred_batch, torch.Tensor):
+        pred_batch = pred_batch.detach().numpy()
+    if isinstance(gt_batch, torch.Tensor):
+        gt_batch = gt_batch.detach().numpy()
+
+    fig, m_axs = plt.subplots(1, 2, figsize=figsize)
+    pr_ax = m_axs.flatten()[0]
+    gt_ax = m_axs.flatten()[1]
+    img_height, img_width = img_size
+
+    def plot_hist(ax, batch, label):
+        points = []
+        for img_points in batch:
+            img_points = img_points.reshape(-1, 2)
+            for y, x in img_points:
+                points.append((x, img_height - y))
+        x, y = zip(*points)
+        ax.hist2d(
+            x=x,
+            y=y,
+            bins=(img_width // 4, img_height // 4),
+            range=[[0, img_width], [0, img_height]],
+        )
+        ax.set_title(label)
+
+    plot_hist(gt_ax, gt_batch, "GT distribution")
+    plot_hist(pr_ax, pred_batch, "Prediction distribution")
+
+    plt.savefig("distrib.jpeg")
+    plt.close()
+    image = cv2.imread("distrib.jpeg", cv2.IMREAD_COLOR)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    return image

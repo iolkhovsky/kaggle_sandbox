@@ -71,7 +71,7 @@ training:
     pars:
       gamma: 0.999
   autosave:
-    period: 5
+    period: 20
     path: checkpoints
     onnx:
       enable: true
